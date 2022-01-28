@@ -6,7 +6,7 @@ use super::{
     TrafficClassGetRequest, TrafficFilterGetRequest,
 };
 use crate::{
-    packet::{TcMessage, NLM_F_CREATE, NLM_F_EXCL, NLM_F_REPLACE},
+    packet::{tc::Qdisc, TcMessage, NLM_F_CREATE, NLM_F_EXCL, NLM_F_REPLACE},
     Handle,
 };
 
@@ -24,19 +24,19 @@ impl QDiscHandle {
 
     /// Create a new qdisc, don't replace if the object already exists.
     /// ( equivalent to `tc qdisc add dev STRING`)
-    pub fn add<T: Into<TcMessage>>(&mut self, msg: T) -> QDiscNewRequest {
+    pub fn add<T: Into<TcMessage<Qdisc>>>(&mut self, msg: T) -> QDiscNewRequest {
         QDiscNewRequest::new(self.0.clone(), msg.into(), NLM_F_EXCL | NLM_F_CREATE)
     }
 
     /// Change a qdisc ( equivalent to `tc qdisc change dev STRING`)
     pub fn change(&mut self, index: i32) -> QDiscNewRequest {
-        let msg: TcMessage = index.into();
+        let msg: TcMessage<Qdisc> = index.into();
         QDiscNewRequest::new(self.0.clone(), msg, 0)
     }
 
     /// Replace existing matching qdisc, create qdisc if it doesn't already
     /// exist.( equivalent to `tc qdisc replace dev STRING`)
-    pub fn replace<T: Into<TcMessage>>(&mut self, msg: T) -> QDiscNewRequest {
+    pub fn replace<T: Into<TcMessage<Qdisc>>>(&mut self, msg: T) -> QDiscNewRequest {
         QDiscNewRequest::new(self.0.clone(), msg.into(), NLM_F_CREATE | NLM_F_REPLACE)
     }
 
@@ -47,7 +47,7 @@ impl QDiscHandle {
     }
 
     /// Delete a qdisc ( equivalent to `tc qdisc del dev STRING`)
-    pub fn del<T: Into<TcMessage>>(&mut self, msg: T) -> QDiscDelRequest {
+    pub fn del<T: Into<TcMessage<Qdisc>>>(&mut self, msg: T) -> QDiscDelRequest {
         QDiscDelRequest::new(self.0.clone(), msg.into())
     }
 }

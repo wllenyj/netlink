@@ -17,6 +17,7 @@ use crate::{
     RtnlMessageBuffer,
     RuleMessage,
     TcMessage,
+    tc::{Chain, Class, Filter, Qdisc},
 };
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -39,18 +40,18 @@ pub enum RtnlMessage {
     NewRoute(RouteMessage),
     DelRoute(RouteMessage),
     GetRoute(RouteMessage),
-    NewQueueDiscipline(TcMessage),
-    DelQueueDiscipline(TcMessage),
-    GetQueueDiscipline(TcMessage),
-    NewTrafficClass(TcMessage),
-    DelTrafficClass(TcMessage),
-    GetTrafficClass(TcMessage),
-    NewTrafficFilter(TcMessage),
-    DelTrafficFilter(TcMessage),
-    GetTrafficFilter(TcMessage),
-    NewTrafficChain(TcMessage),
-    DelTrafficChain(TcMessage),
-    GetTrafficChain(TcMessage),
+    NewQueueDiscipline(TcMessage<Qdisc>),
+    DelQueueDiscipline(TcMessage<Qdisc>),
+    GetQueueDiscipline(TcMessage<Qdisc>),
+    NewTrafficClass(TcMessage<Class>),
+    DelTrafficClass(TcMessage<Class>),
+    GetTrafficClass(TcMessage<Class>),
+    NewTrafficFilter(TcMessage<Filter>),
+    DelTrafficFilter(TcMessage<Filter>),
+    GetTrafficFilter(TcMessage<Filter>),
+    NewTrafficChain(TcMessage<Chain>),
+    DelTrafficChain(TcMessage<Chain>),
+    GetTrafficChain(TcMessage<Chain>),
     NewNsId(NsidMessage),
     DelNsId(NsidMessage),
     GetNsId(NsidMessage),
@@ -276,12 +277,18 @@ impl Emitable for RtnlMessage {
             | NewQueueDiscipline(ref msg)
             | DelQueueDiscipline(ref msg)
             | GetQueueDiscipline(ref msg)
+            => msg.buffer_len(),
+
             | NewTrafficClass(ref msg)
             | DelTrafficClass(ref msg)
             | GetTrafficClass(ref msg)
+            => msg.buffer_len(),
+
             | NewTrafficFilter(ref msg)
             | DelTrafficFilter(ref msg)
             | GetTrafficFilter(ref msg)
+            => msg.buffer_len(),
+
             | NewTrafficChain(ref msg)
             | DelTrafficChain(ref msg)
             | GetTrafficChain(ref msg)
@@ -334,12 +341,18 @@ impl Emitable for RtnlMessage {
             | NewQueueDiscipline(ref msg)
             | DelQueueDiscipline(ref msg)
             | GetQueueDiscipline(ref msg)
+            => msg.emit(buffer),
+
             | NewTrafficClass(ref msg)
             | DelTrafficClass(ref msg)
             | GetTrafficClass(ref msg)
+            => msg.emit(buffer),
+
             | NewTrafficFilter(ref msg)
             | DelTrafficFilter(ref msg)
             | GetTrafficFilter(ref msg)
+            => msg.emit(buffer),
+
             | NewTrafficChain(ref msg)
             | DelTrafficChain(ref msg)
             | GetTrafficChain(ref msg)

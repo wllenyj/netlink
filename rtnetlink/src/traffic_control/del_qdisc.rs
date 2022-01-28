@@ -2,17 +2,17 @@
 use futures::StreamExt;
 
 use crate::{
-    packet::{NetlinkMessage, RtnlMessage, TcMessage, NLM_F_ACK, NLM_F_REQUEST},
+    packet::{tc::Qdisc, NetlinkMessage, RtnlMessage, TcMessage, NLM_F_ACK, NLM_F_REQUEST},
     try_nl, Error, Handle,
 };
 
 pub struct QDiscDelRequest {
     handle: Handle,
-    message: TcMessage,
+    message: TcMessage<Qdisc>,
 }
 
 impl QDiscDelRequest {
-    pub(crate) fn new(handle: Handle, message: TcMessage) -> Self {
+    pub(crate) fn new(handle: Handle, message: TcMessage<Qdisc>) -> Self {
         QDiscDelRequest { handle, message }
     }
 
@@ -34,7 +34,7 @@ impl QDiscDelRequest {
     }
 
     /// Return a mutable reference to the request
-    pub fn message_mut(&mut self) -> &mut TcMessage {
+    pub fn message_mut(&mut self) -> &mut TcMessage<Qdisc> {
         &mut self.message
     }
 }

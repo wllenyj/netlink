@@ -23,6 +23,7 @@ use crate::{
     RuleMessageBuffer,
     TcMessage,
     TcMessageBuffer,
+    tc::{Class, Qdisc, Filter, Chain},
 };
 use anyhow::Context;
 
@@ -154,22 +155,40 @@ impl<'a, T: AsRef<[u8]> + ?Sized> ParseableParametrized<RtnlMessageBuffer<&'a T>
                 }
             }
             // TC Messages
-            RTM_NEWQDISC | RTM_DELQDISC | RTM_GETQDISC |
-            RTM_NEWTCLASS | RTM_DELTCLASS | RTM_GETTCLASS |
-            RTM_NEWTFILTER | RTM_DELTFILTER | RTM_GETTFILTER |
-            RTM_NEWCHAIN | RTM_DELCHAIN | RTM_GETCHAIN => {
-                let err = "invalid tc message";
-                let msg = TcMessage::parse(&TcMessageBuffer::new_checked(&buf.inner()).context(err)?).context(err)?;
+            RTM_NEWQDISC | RTM_DELQDISC | RTM_GETQDISC => {
+                let err = "invalid tc qdisc message";
+                let msg = TcMessage::<Qdisc>::parse(&TcMessageBuffer::new_checked(&buf.inner()).context(err)?).context(err)?;
                 match message_type {
                     RTM_NEWQDISC => NewQueueDiscipline(msg),
                     RTM_DELQDISC => DelQueueDiscipline(msg),
                     RTM_GETQDISC => GetQueueDiscipline(msg),
+                    _ => unreachable!(),
+                }
+            }
+            RTM_NEWTCLASS | RTM_DELTCLASS | RTM_GETTCLASS => {
+                let err = "invalid tc class message";
+                let msg = TcMessage::<Class>::parse(&TcMessageBuffer::new_checked(&buf.inner()).context(err)?).context(err)?;
+                match message_type {
                     RTM_NEWTCLASS => NewTrafficClass(msg),
                     RTM_DELTCLASS => DelTrafficClass(msg),
                     RTM_GETTCLASS => GetTrafficClass(msg),
+                    _ => unreachable!(),
+                }
+            }
+            RTM_NEWTFILTER | RTM_DELTFILTER | RTM_GETTFILTER => {
+                let err = "invalid tc filter message";
+                let msg = TcMessage::<Filter>::parse(&TcMessageBuffer::new_checked(&buf.inner()).context(err)?).context(err)?;
+                match message_type {
                     RTM_NEWTFILTER => NewTrafficFilter(msg),
                     RTM_DELTFILTER => DelTrafficFilter(msg),
                     RTM_GETTFILTER => GetTrafficFilter(msg),
+                    _ => unreachable!(),
+                }
+            }
+            RTM_NEWCHAIN | RTM_DELCHAIN | RTM_GETCHAIN => {
+                let err = "invalid tc chain message";
+                let msg = TcMessage::<Chain>::parse(&TcMessageBuffer::new_checked(&buf.inner()).context(err)?).context(err)?;
+                match message_type {
                     RTM_NEWCHAIN => NewTrafficChain(msg),
                     RTM_DELCHAIN => DelTrafficChain(msg),
                     RTM_GETCHAIN => GetTrafficChain(msg),

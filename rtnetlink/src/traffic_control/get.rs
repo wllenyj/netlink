@@ -7,7 +7,9 @@ use futures::{
 };
 
 use crate::{
-    packet::{tc::constants::*, NetlinkMessage, RtnlMessage, TcMessage, NLM_F_DUMP, NLM_F_REQUEST},
+    packet::{
+        tc::{constants::*, Chain, Class, Filter, Qdisc},
+        NetlinkMessage, RtnlMessage, TcMessage, NLM_F_DUMP, NLM_F_REQUEST},
     try_rtnl,
     Error,
     Handle,
@@ -15,7 +17,7 @@ use crate::{
 
 pub struct QDiscGetRequest {
     handle: Handle,
-    message: TcMessage,
+    message: TcMessage<Qdisc>,
 }
 
 impl QDiscGetRequest {
@@ -27,7 +29,7 @@ impl QDiscGetRequest {
     }
 
     /// Execute the request
-    pub fn execute(self) -> impl TryStream<Ok = TcMessage, Error = Error> {
+    pub fn execute(self) -> impl TryStream<Ok = TcMessage<Qdisc>, Error = Error> {
         let QDiscGetRequest {
             mut handle,
             message,
@@ -40,7 +42,7 @@ impl QDiscGetRequest {
             Ok(response) => Either::Left(
                 response.map(move |msg| Ok(try_rtnl!(msg, RtnlMessage::NewQueueDiscipline))),
             ),
-            Err(e) => Either::Right(future::err::<TcMessage, Error>(e).into_stream()),
+            Err(e) => Either::Right(future::err::<TcMessage<Qdisc>, Error>(e).into_stream()),
         }
     }
 
@@ -59,7 +61,7 @@ impl QDiscGetRequest {
 
 pub struct TrafficClassGetRequest {
     handle: Handle,
-    message: TcMessage,
+    message: TcMessage<Class>,
 }
 
 impl TrafficClassGetRequest {
@@ -70,7 +72,7 @@ impl TrafficClassGetRequest {
     }
 
     /// Execute the request
-    pub fn execute(self) -> impl TryStream<Ok = TcMessage, Error = Error> {
+    pub fn execute(self) -> impl TryStream<Ok = TcMessage<Class>, Error = Error> {
         let TrafficClassGetRequest {
             mut handle,
             message,
@@ -83,14 +85,14 @@ impl TrafficClassGetRequest {
             Ok(response) => Either::Left(
                 response.map(move |msg| Ok(try_rtnl!(msg, RtnlMessage::NewTrafficClass))),
             ),
-            Err(e) => Either::Right(future::err::<TcMessage, Error>(e).into_stream()),
+            Err(e) => Either::Right(future::err::<TcMessage<Class>, Error>(e).into_stream()),
         }
     }
 }
 
 pub struct TrafficFilterGetRequest {
     handle: Handle,
-    message: TcMessage,
+    message: TcMessage<Filter>,
 }
 
 impl TrafficFilterGetRequest {
@@ -101,7 +103,7 @@ impl TrafficFilterGetRequest {
     }
 
     /// Execute the request
-    pub fn execute(self) -> impl TryStream<Ok = TcMessage, Error = Error> {
+    pub fn execute(self) -> impl TryStream<Ok = TcMessage<Filter>, Error = Error> {
         let TrafficFilterGetRequest {
             mut handle,
             message,
@@ -114,14 +116,14 @@ impl TrafficFilterGetRequest {
             Ok(response) => Either::Left(
                 response.map(move |msg| Ok(try_rtnl!(msg, RtnlMessage::NewTrafficFilter))),
             ),
-            Err(e) => Either::Right(future::err::<TcMessage, Error>(e).into_stream()),
+            Err(e) => Either::Right(future::err::<TcMessage<Filter>, Error>(e).into_stream()),
         }
     }
 }
 
 pub struct TrafficChainGetRequest {
     handle: Handle,
-    message: TcMessage,
+    message: TcMessage<Chain>,
 }
 
 impl TrafficChainGetRequest {
@@ -132,7 +134,7 @@ impl TrafficChainGetRequest {
     }
 
     /// Execute the request
-    pub fn execute(self) -> impl TryStream<Ok = TcMessage, Error = Error> {
+    pub fn execute(self) -> impl TryStream<Ok = TcMessage<Chain>, Error = Error> {
         let TrafficChainGetRequest {
             mut handle,
             message,
@@ -145,7 +147,7 @@ impl TrafficChainGetRequest {
             Ok(response) => Either::Left(
                 response.map(move |msg| Ok(try_rtnl!(msg, RtnlMessage::NewTrafficChain))),
             ),
-            Err(e) => Either::Right(future::err::<TcMessage, Error>(e).into_stream()),
+            Err(e) => Either::Right(future::err::<TcMessage<Chain>, Error>(e).into_stream()),
         }
     }
 }

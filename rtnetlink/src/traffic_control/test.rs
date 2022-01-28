@@ -8,17 +8,16 @@ use tokio::runtime::Runtime;
 use crate::{
     new_connection,
     packet::{
-        rtnl::tc::nlas::Nla::{Chain, HwOffload, Kind},
-        ErrorMessage,
-        TcMessage,
-        AF_UNSPEC,
+        rtnl::tc::nlas::Nla,
+        tc::{Chain, Class, Filter, Qdisc},
+        ErrorMessage, TcMessage, AF_UNSPEC,
     },
     Error::NetlinkError,
 };
 
 static TEST_DUMMY_NIC: &str = "netlink-test";
 
-async fn _get_qdiscs() -> Vec<TcMessage> {
+async fn _get_qdiscs() -> Vec<TcMessage<Qdisc>> {
     let (connection, handle, _) = new_connection().unwrap();
     tokio::spawn(connection);
     let mut qdiscs_iter = handle.qdisc().get().execute();
@@ -38,11 +37,11 @@ fn test_get_qdiscs() {
     assert_eq!(qdisc_of_loopback_nic.header.handle, 0);
     assert_eq!(qdisc_of_loopback_nic.header.parent, u32::MAX);
     assert_eq!(qdisc_of_loopback_nic.header.info, 2); // refcount
-    assert_eq!(qdisc_of_loopback_nic.nlas[0], Kind("noqueue".to_string()));
-    assert_eq!(qdisc_of_loopback_nic.nlas[1], HwOffload(0));
+    assert_eq!(qdisc_of_loopback_nic.nlas[0], Nla::Kind("noqueue".to_string()));
+    assert_eq!(qdisc_of_loopback_nic.nlas[1], Nla::HwOffload(0));
 }
 
-async fn _get_tclasses(ifindex: i32) -> Vec<TcMessage> {
+async fn _get_tclasses(ifindex: i32) -> Vec<TcMessage<Class>> {
     let (connection, handle, _) = new_connection().unwrap();
     tokio::spawn(connection);
     let mut tclasses_iter = handle.traffic_class(ifindex).get().execute();
@@ -208,7 +207,7 @@ fn _remove_test_filter_from_dummy() {
         ));
 }
 
-async fn _get_filters(ifindex: i32) -> Vec<TcMessage> {
+async fn _get_filters(ifindex: i32) -> Vec<TcMessage<Filter>> {
     let (connection, handle, _) = new_connection().unwrap();
     tokio::spawn(connection);
     let mut filters_iter = handle.traffic_filter(ifindex).get().execute();
@@ -219,7 +218,7 @@ async fn _get_filters(ifindex: i32) -> Vec<TcMessage> {
     filters
 }
 
-async fn _get_chains(ifindex: i32) -> Vec<TcMessage> {
+async fn _get_chains(ifindex: i32) -> Vec<TcMessage<Chain>> {
     let (connection, handle, _) = new_connection().unwrap();
     tokio::spawn(connection);
     let mut chains_iter = handle.traffic_chain(ifindex).get().execute();
@@ -267,21 +266,21 @@ fn test_get_traffic_classes_filters_and_chains() {
     assert_eq!(tclass.header.family, AF_UNSPEC as u8);
     assert_eq!(tclass.header.index, ifindex);
     assert_eq!(tclass.header.parent, u32::MAX);
-    assert_eq!(tclass.nlas[0], Kind("htb".to_string()));
+    assert_eq!(tclass.nlas[0], Nla::Kind("htb".to_string()));
     assert_eq!(filters.len(), 2);
     assert_eq!(filters[0].header.family, AF_UNSPEC as u8);
     assert_eq!(filters[0].header.index, ifindex);
     assert_eq!(filters[0].header.parent, u16::MAX as u32 + 1);
-    assert_eq!(filters[0].nlas[0], Kind("basic".to_string()));
+    assert_eq!(filters[0].nlas[0], Nla::Kind("basic".to_string()));
     assert_eq!(filters[1].header.family, AF_UNSPEC as u8);
     assert_eq!(filters[1].header.index, ifindex);
     assert_eq!(filters[1].header.parent, u16::MAX as u32 + 1);
-    assert_eq!(filters[1].nlas[0], Kind("basic".to_string()));
+    assert_eq!(filters[1].nlas[0], Nla::Kind("basic".to_string()));
     assert!(chains.len() <= 1);
     if chains.len() == 1 {
         assert_eq!(chains[0].header.family, AF_UNSPEC as u8);
         assert_eq!(chains[0].header.index, ifindex);
         assert_eq!(chains[0].header.parent, u16::MAX as u32 + 1);
-        assert_eq!(chains[0].nlas[0], Chain([0u8, 0, 0, 0].to_vec()));
+        assert_eq!(chains[0].nlas[0], Nla::Chain([0u8, 0, 0, 0].to_vec()));
     }
 }

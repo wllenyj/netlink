@@ -4,7 +4,7 @@ use futures::stream::StreamExt;
 
 use crate::{
     packet::{
-        tc::{constants::*, nlas},
+        tc::{constants::*, nlas, Ingress, Qdisc},
         NetlinkMessage, RtnlMessage, TcMessage, NLM_F_ACK, NLM_F_REQUEST,
     },
     try_nl, Error, Handle,
@@ -12,12 +12,12 @@ use crate::{
 
 pub struct QDiscNewRequest {
     handle: Handle,
-    message: TcMessage,
+    message: TcMessage<Qdisc>,
     flags: u16,
 }
 
 impl QDiscNewRequest {
-    pub(crate) fn new(handle: Handle, message: TcMessage, flags: u16) -> Self {
+    pub(crate) fn new(handle: Handle, message: TcMessage<Qdisc>, flags: u16) -> Self {
         Self {
             handle,
             message,
@@ -70,7 +70,7 @@ impl QDiscNewRequest {
         self.message.header.handle = 0xffff0000;
         self.message
             .nlas
-            .push(nlas::Nla::Kind("ingress".to_string()));
+            .push(nlas::Nla::Kind(Ingress::KIND.to_string()));
         self
     }
 }
@@ -89,7 +89,7 @@ mod test {
     use crate::{
         new_connection,
         packet::{
-            rtnl::tc::nlas::Nla::{HwOffload, Kind},
+            rtnl::tc::nlas::Nla::{HwOffload, Kind, Options},
             LinkMessage, AF_UNSPEC,
         },
         NetworkNamespace, NETNS_PATH, SELF_NS_PATH,
@@ -187,7 +187,8 @@ mod test {
                 assert_eq!(nl_msg.header.handle, 0xffff0000);
                 assert_eq!(nl_msg.header.parent, TC_H_INGRESS);
                 assert_eq!(nl_msg.header.info, 1); // refcount
-                assert_eq!(nl_msg.nlas[0], Kind("ingress".to_string()));
+                assert_eq!(nl_msg.nlas[0], Kind(Ingress::KIND.to_string()));
+                assert_eq!(nl_msg.nlas[1], Options(Qdisc::Ingress(Ingress())));
                 assert_eq!(nl_msg.nlas[2], HwOffload(0));
                 found = true;
                 break;
@@ -199,6 +200,7 @@ mod test {
     }
 
     #[test]
+    #[cfg_attr(not(feature = "test_as_root"), ignore)]
     fn test_new_qdisc() {
         Runtime::new().unwrap().block_on(test_async_new_qdisc());
     }
