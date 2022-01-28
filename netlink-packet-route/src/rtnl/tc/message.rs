@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+use std::convert::From;
 
 use anyhow::Context;
 
@@ -23,6 +24,30 @@ impl TcMessage {
 
     pub fn from_parts(header: TcHeader, nlas: Vec<Nla>) -> Self {
         TcMessage { header, nlas }
+    }
+}
+
+impl From<i32> for TcMessage {
+    fn from(index: i32) -> Self {
+        TcMessage {
+            header: TcHeader {
+                index,
+                ..Default::default()
+            },
+            nlas: Vec::new(),
+        }
+    }
+}
+
+impl From<u32> for TcMessage {
+    fn from(index: u32) -> Self {
+        TcMessage {
+            header: TcHeader {
+                index: index as i32,
+                ..Default::default()
+            },
+            nlas: Vec::new(),
+        }
     }
 }
 
