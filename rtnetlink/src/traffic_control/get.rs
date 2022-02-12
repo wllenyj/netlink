@@ -8,7 +8,9 @@ use futures::{
 
 use crate::{
     packet::{tc::constants::*, NetlinkMessage, RtnlMessage, TcMessage, NLM_F_DUMP, NLM_F_REQUEST},
-    try_rtnl, Error, Handle,
+    try_rtnl,
+    Error,
+    Handle,
 };
 
 pub struct QDiscGetRequest {
@@ -114,6 +116,13 @@ impl TrafficFilterGetRequest {
             ),
             Err(e) => Either::Right(future::err::<TcMessage, Error>(e).into_stream()),
         }
+    }
+
+    /// Set parent to root.
+    pub fn root(mut self) -> Self {
+        assert_eq!(self.message.header.parent, TC_H_UNSPEC);
+        self.message.header.parent = TC_H_ROOT;
+        self
     }
 }
 

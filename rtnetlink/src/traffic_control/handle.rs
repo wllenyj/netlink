@@ -3,7 +3,7 @@ use std::convert::{From, Into};
 
 use super::{
     QDiscDelRequest, QDiscGetRequest, QDiscNewRequest, TrafficChainGetRequest,
-    TrafficClassGetRequest, TrafficFilterGetRequest,
+    TrafficClassGetRequest, TrafficFilterGetRequest, TrafficFilterNewRequest,
 };
 
 use crate::{
@@ -87,6 +87,25 @@ impl TrafficFilterHandle {
     /// `tc filter show dev <iface_name>`)
     pub fn get(&mut self) -> TrafficFilterGetRequest {
         TrafficFilterGetRequest::new(self.handle.clone(), self.ifindex)
+    }
+
+    /// Add a filter to a node, don't replace if the object already exists.
+    /// ( equivalent to `tc filter add dev STRING`)
+    pub fn add(&mut self) -> TrafficFilterNewRequest {
+        TrafficFilterNewRequest::new(self.handle.clone(), self.ifindex, NLM_F_EXCL | NLM_F_CREATE)
+    }
+
+    /// Change the filter, the handle cannot be changed and neither can the parent.
+    /// In other words, change cannot move a node.
+    /// ( equivalent to `tc filter change dev STRING`)
+    pub fn change(&mut self) -> TrafficFilterNewRequest {
+        TrafficFilterNewRequest::new(self.handle.clone(), self.ifindex, 0)
+    }
+
+    /// Replace existing matching filter, create filter if it doesn't already exist.
+    /// ( equivalent to `tc filter replace dev STRING`)
+    pub fn replace(&mut self) -> TrafficFilterNewRequest {
+        TrafficFilterNewRequest::new(self.handle.clone(), self.ifindex, NLM_F_CREATE)
     }
 }
 
