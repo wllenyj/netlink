@@ -1,12 +1,15 @@
 // SPDX-License-Identifier: MIT
+use std::convert::{From, Into};
 
 use super::{
-    QDiscGetRequest,
-    TrafficChainGetRequest,
-    TrafficClassGetRequest,
-    TrafficFilterGetRequest,
+    QDiscDelRequest, QDiscGetRequest, QDiscNewRequest, TrafficChainGetRequest,
+    TrafficClassGetRequest, TrafficFilterGetRequest,
 };
-use crate::Handle;
+
+use crate::{
+    packet::{TcMessage, NLM_F_CREATE, NLM_F_EXCL, NLM_F_REPLACE},
+    Handle,
+};
 
 pub struct QDiscHandle(Handle);
 
@@ -18,6 +21,38 @@ impl QDiscHandle {
     /// Retrieve the list of qdisc (equivalent to `tc qdisc show`)
     pub fn get(&mut self) -> QDiscGetRequest {
         QDiscGetRequest::new(self.0.clone())
+    }
+
+    /// Create a new qdisc, don't replace if the object already exists.
+    /// ( equivalent to `tc qdisc add dev STRING`)
+    pub fn add<T: Into<TcMessage>>(&mut self, msg: T) -> QDiscNewRequest {
+        QDiscNewRequest::new(self.0.clone(), msg.into(), NLM_F_EXCL | NLM_F_CREATE)
+    }
+
+    /// Change the qdisc, the handle cannot be changed and neither can the parent.
+    /// In other words, change cannot move a node.
+    /// ( equivalent to `tc qdisc change dev STRING`)
+    pub fn change(&mut self, index: i32) -> QDiscNewRequest {
+        let msg: TcMessage = index.into();
+        QDiscNewRequest::new(self.0.clone(), msg, 0)
+    }
+
+    /// Replace existing matching qdisc, create qdisc if it doesn't already exist.
+    /// ( equivalent to `tc qdisc replace dev STRING`)
+    pub fn replace<T: Into<TcMessage>>(&mut self, msg: T) -> QDiscNewRequest {
+        QDiscNewRequest::new(self.0.clone(), msg.into(), NLM_F_CREATE | NLM_F_REPLACE)
+    }
+
+    /// Performs a replace where the node must exist already.
+    /// ( equivalent to `tc qdisc link dev STRING`)
+    pub fn link(&mut self, index: i32) -> QDiscNewRequest {
+        let msg = TcMessage::from(index);
+        QDiscNewRequest::new(self.0.clone(), msg, NLM_F_REPLACE)
+    }
+
+    /// Delete the qdisc ( equivalent to `tc qdisc del dev STRING`)
+    pub fn del<T: Into<TcMessage>>(&mut self, msg: T) -> QDiscDelRequest {
+        QDiscDelRequest::new(self.0.clone(), msg.into())
     }
 }
 
